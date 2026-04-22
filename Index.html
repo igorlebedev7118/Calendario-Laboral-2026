@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendario de Vacaciones 2026</title>
+
+<style>
+body { font-family: Arial; margin: 0; display: flex; background:#f5f5f5;}
+.sidebar { width:300px; background:white; padding:15px; border-right:2px solid #ccc;}
+.calendar { flex:1; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:10px;}
+.month { background:white; border:1px solid #ccc; padding:5px;}
+.day { border:1px solid #ddd; padding:5px; cursor:pointer; text-align:center; font-size:12px;}
+.day.selected { outline:2px solid black;}
+input,button { width:100%; margin:5px 0; padding:8px;}
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h3>Calendario 2026</h3>
+
+  <input id="name" placeholder="Nombre">
+  <input type="color" id="color" value="#ffcc00">
+
+  <button onclick="edit()">Editar mis vacaciones</button>
+  <button onclick="save()">Guardar</button>
+  <button onclick="clearMine()">Borrar mis vacaciones</button>
+
+  <div id="counter">Días: 0 / 21</div>
+
+  <h4>Vacaciones</h4>
+  <div id="list"></div>
+</div>
+
+<div id="calendar" class="calendar"></div>
+
+<script type="module">
+
+// ✅ ПРАВИЛЬНІ ІМПОРТИ
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// ✅ ТВОЇ ДАНІ
+const firebaseConfig = {
+  apiKey: "AIzaSyAnaz1QNDKh2kQLyMjj1IZ-7GNivIar3Xs",
+  authDomain: "calendario-laboral-2026-5305e.firebaseapp.com",
+  databaseURL: "https://calendario-laboral-2026-5305e-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "calendario-laboral-2026-5305e",
+  storageBucket: "calendario-laboral-2026-5305e.firebasestorage.app",
+  messagingSenderId: "54390898052",
+  appId: "1:54390898052:web:e35ef5feec90efdb5bf1d1"
+};
+
+// ❌ analytics прибрали — не потрібен
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const months = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+let temp = new Set();
+let data = {};
+
+function key(m,d){return `2026-${m+1}-${d}`;}
+
+function draw(){
+  const cal = document.getElementById("calendar");
+  cal.innerHTML="";
+
+  for(let m=0;m<12;m++){
+    let div=document.createElement("div");
+    div.className="month";
+    div.innerHTML=`<b>${months[m]}</b>`;
+
+    let days=new Date(2026,m+1,0).getDate();
+
+    for(let d=1;d<=days;d++){
+      let el=document.createElement("div");
+      el.className="day";
+      el.innerText=d;
+
+      let k=key(m,d);
+      let occ=find(k);
+
+      if(occ){
+        el.style.background=occ.color;
+        el.innerText=d+" "+occ.name;
+      }
+
+      if(temp.has(k)){
+        el.classList.add("selected");
+        el.style.background=document.getElementById("color").value;
+      }
+
+      el.onclick=()=>{
+        if(occ && occ.name!==getName()) return alert("Ya ocupado");
+
+        if(temp.has(k)) temp.delete(k);
+        else {
+          if(temp.size>=21) return alert("Máx 21 días");
+          temp.add(k);
+        }
+        draw();
+      }
+
+      div.appendChild(el);
+    }
+
+    cal.appendChild(div);
+  }
+
+  document.getElementById("counter").innerText=`Días: ${temp.size} / 21`;
+}
+
+function getName(){return document.getElementById("name").value.trim();}
+
+function find(k){
+  for(let n in data){
+    if(data[n].dates.includes(k)) return {name:data[n].name,color:data[n].color};
+  }
+}
+
+window.save=()=>{
+  let name=getName();
+  if(!name) return alert("Nombre requerido");
+
+  let id=name.toLowerCase();
+
+  set(ref(db,"vacations/"+id),{
+    name,
+    color:document.getElementById("color").value,
+    dates:[...temp]
+  });
+
+  temp.clear();
+};
+
+window.edit=()=>{
+  let name=getName();
+  if(!name) return alert("Nombre requerido");
+
+  let id=name.toLowerCase();
+  if(data[id]){
+    temp=new Set(data[id].dates);
+    document.getElementById("color").value=data[id].color;
+  }
+  draw();
+};
+
+window.clearMine=()=>{
+  let name=getName();
+  let id=name.toLowerCase();
+  remove(ref(db,"vacations/"+id));
+};
+
+onValue(ref(db,"vacations"), snap=>{
+  data=snap.val()||{};
+  draw();
+
+  let list=document.getElementById("list");
+  list.innerHTML="";
+
+  for(let k in data){
+    let d=data[k];
+    let el=document.createElement("div");
+    el.innerText=`${d.name} (${d.dates.length} días)`;
+    list.appendChild(el);
+  }
+});
+
+draw();
+
+</script>
+
+</body>
+</html>
