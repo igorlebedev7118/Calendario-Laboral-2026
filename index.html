@@ -1,178 +1,713 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendario de Vacaciones 2026</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendario de Vacaciones 2026</title>
 
-<style>
-body { font-family: Arial; margin: 0; display: flex; background:#f5f5f5;}
-.sidebar { width:300px; background:white; padding:15px; border-right:2px solid #ccc;}
-.calendar { flex:1; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:10px;}
-.month { background:white; border:1px solid #ccc; padding:5px;}
-.day { border:1px solid #ddd; padding:5px; cursor:pointer; text-align:center; font-size:12px;}
-.day.selected { outline:2px solid black;}
-input,button { width:100%; margin:5px 0; padding:8px;}
-</style>
-
-</head>
-
-<body>
-
-<div class="sidebar">
-  <h3>Calendario 2026</h3>
-
-  <input id="name" placeholder="Nombre">
-  <input type="color" id="color" value="#ffcc00">
-
-  <button onclick="edit()">Editar mis vacaciones</button>
-  <button onclick="save()">Guardar</button>
-  <button onclick="clearMine()">Borrar mis vacaciones</button>
-
-  <div id="counter">Días: 0 / 21</div>
-
-  <h4>Vacaciones</h4>
-  <div id="list"></div>
-</div>
-
-<div id="calendar" class="calendar"></div>
-
-<script type="module">
-
-// ✅ ПРАВИЛЬНІ ІМПОРТИ
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-// ✅ ТВОЇ ДАНІ
-const firebaseConfig = {
-  apiKey: "AIzaSyAnaz1QNDKh2kQLyMjj1IZ-7GNivIar3Xs",
-  authDomain: "calendario-laboral-2026-5305e.firebaseapp.com",
-  databaseURL: "https://calendario-laboral-2026-5305e-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "calendario-laboral-2026-5305e",
-  storageBucket: "calendario-laboral-2026-5305e.firebasestorage.app",
-  messagingSenderId: "54390898052",
-  appId: "1:54390898052:web:e35ef5feec90efdb5bf1d1"
-};
-
-// ❌ analytics прибрали — не потрібен
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-const months = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-
-let temp = new Set();
-let data = {};
-
-function key(m,d){return `2026-${m+1}-${d}`;}
-
-function draw(){
-  const cal = document.getElementById("calendar");
-  cal.innerHTML="";
-
-  for(let m=0;m<12;m++){
-    let div=document.createElement("div");
-    div.className="month";
-    div.innerHTML=`<b>${months[m]}</b>`;
-
-    let days=new Date(2026,m+1,0).getDate();
-
-    for(let d=1;d<=days;d++){
-      let el=document.createElement("div");
-      el.className="day";
-      el.innerText=d;
-
-      let k=key(m,d);
-      let occ=find(k);
-
-      if(occ){
-        el.style.background=occ.color;
-        el.innerText=d+" "+occ.name;
-      }
-
-      if(temp.has(k)){
-        el.classList.add("selected");
-        el.style.background=document.getElementById("color").value;
-      }
-
-      el.onclick=()=>{
-        if(occ && occ.name!==getName()) return alert("Ya ocupado");
-
-        if(temp.has(k)) temp.delete(k);
-        else {
-          if(temp.size>=21) return alert("Máx 21 días");
-          temp.add(k);
-        }
-        draw();
-      }
-
-      div.appendChild(el);
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-    cal.appendChild(div);
-  }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f5f7;
+      color: #222;
+    }
 
-  document.getElementById("counter").innerText=`Días: ${temp.size} / 21`;
-}
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
 
-function getName(){return document.getElementById("name").value.trim();}
+    .sidebar {
+      width: 320px;
+      background: #ffffff;
+      border-right: 1px solid #d9dce1;
+      padding: 18px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
 
-function find(k){
-  for(let n in data){
-    if(data[n].dates.includes(k)) return {name:data[n].name,color:data[n].color};
-  }
-}
+    .sidebar h2 {
+      margin: 0 0 16px 0;
+      font-size: 30px;
+    }
 
-window.save=()=>{
-  let name=getName();
-  if(!name) return alert("Nombre requerido");
+    .field {
+      margin-bottom: 14px;
+    }
 
-  let id=name.toLowerCase();
+    .field label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
 
-  set(ref(db,"vacations/"+id),{
-    name,
-    color:document.getElementById("color").value,
-    dates:[...temp]
-  });
+    .text-input,
+    .btn,
+    .color-input {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #cfd5dd;
+      font-size: 15px;
+    }
 
-  temp.clear();
-};
+    .text-input {
+      padding: 11px 12px;
+      background: #fff;
+    }
 
-window.edit=()=>{
-  let name=getName();
-  if(!name) return alert("Nombre requerido");
+    .color-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
 
-  let id=name.toLowerCase();
-  if(data[id]){
-    temp=new Set(data[id].dates);
-    document.getElementById("color").value=data[id].color;
-  }
-  draw();
-};
+    .color-input {
+      height: 42px;
+      padding: 4px;
+      background: #fff;
+      cursor: pointer;
+    }
 
-window.clearMine=()=>{
-  let name=getName();
-  let id=name.toLowerCase();
-  remove(ref(db,"vacations/"+id));
-};
+    .color-preview {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid #cfd5dd;
+      flex-shrink: 0;
+    }
 
-onValue(ref(db,"vacations"), snap=>{
-  data=snap.val()||{};
-  draw();
+    .btn {
+      padding: 11px 12px;
+      background: #f7f8fa;
+      cursor: pointer;
+      margin-bottom: 10px;
+      font-weight: 600;
+      transition: 0.15s ease;
+    }
 
-  let list=document.getElementById("list");
-  list.innerHTML="";
+    .btn:hover {
+      background: #eef2f7;
+    }
 
-  for(let k in data){
-    let d=data[k];
-    let el=document.createElement("div");
-    el.innerText=`${d.name} (${d.dates.length} días)`;
-    list.appendChild(el);
-  }
-});
+    .btn.primary {
+      background: #1f6feb;
+      color: #fff;
+      border-color: #1f6feb;
+    }
 
-draw();
+    .btn.primary:hover {
+      background: #185bcc;
+    }
 
-</script>
+    .status {
+      background: #f7f8fa;
+      border: 1px solid #dde2e8;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      margin: 14px 0;
+      line-height: 1.4;
+    }
 
+    .counter {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 12px 0 18px;
+    }
+
+    .saved-list-title {
+      margin: 18px 0 10px;
+      font-size: 24px;
+    }
+
+    .saved-item {
+      border: 1px solid #dde2e8;
+      border-radius: 10px;
+      background: #fafbfc;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .saved-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .saved-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+
+    .calendar-wrap {
+      flex: 1;
+      padding: 18px;
+      overflow-x: auto;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .month {
+      background: #fff;
+      border: 1px solid #d9dce1;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .month-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+
+    .weekdays,
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .weekday {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #6b7280;
+      padding: 6px 0;
+    }
+
+    .empty-cell {
+      min-height: 52px;
+    }
+
+    .day {
+      min-height: 58px;
+      border: 1px solid #d8dde6;
+      border-radius: 10px;
+      background: #fff;
+      padding: 4px;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.05s ease, box-shadow 0.12s ease;
+      overflow: hidden;
+    }
+
+    .day:hover {
+      box-shadow: 0 0 0 2px rgba(31,111,235,0.12);
+    }
+
+    .day.blocked {
+      cursor: not-allowed;
+      opacity: 0.95;
+    }
+
+    .day.selected-temp {
+      outline: 3px solid #111827;
+      outline-offset: -3px;
+    }
+
+    .day-number {
+      font-size: 13px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .day-name {
+      font-size: 10px;
+      line-height: 1.15;
+      text-align: center;
+      word-break: break-word;
+      padding: 0 2px 2px;
+    }
+
+    @media (max-width: 1200px) {
+      .calendar {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        display: block;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        border-right: none;
+        border-bottom: 1px solid #d9dce1;
+      }
+
+      .calendar {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <h2>Calendario 2026</h2>
+
+      <div class="field">
+        <label for="name">Nombre</label>
+        <input id="name" class="text-input" type="text" placeholder="Escribe tu nombre" />
+      </div>
+
+      <div class="field">
+        <label for="color">Elegir su color</label>
+        <div class="color-row">
+          <input id="color" class="color-input" type="color" value="#22c55e" />
+          <div id="colorPreview" class="color-preview"></div>
+        </div>
+      </div>
+
+      <button class="btn" id="editBtn">Editar mis vacaciones</button>
+      <button class="btn" id="clearSelectionBtn">Limpiar selección</button>
+      <button class="btn primary" id="saveBtn">Guardar vacaciones</button>
+      <button class="btn" id="clearMineBtn">Borrar mis vacaciones</button>
+
+      <div class="counter" id="counter">Días seleccionados: 0 / 21</div>
+
+      <div class="status" id="status">
+        Escribe tu nombre, elige un color y selecciona tus días.
+      </div>
+
+      <h3 class="saved-list-title">Vacaciones</h3>
+      <div id="list"></div>
+    </aside>
+
+    <main class="calendar-wrap">
+      <div id="calendar" class="calendar"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAnaz1QNDKh2kQLyMjj1IZ-7GNivIar3Xs",
+      authDomain: "calendario-laboral-2026-5305e.firebaseapp.com",
+      databaseURL: "https://calendario-laboral-2026-5305e-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "calendario-laboral-2026-5305e",
+      storageBucket: "calendario-laboral-2026-5305e.firebasestorage.app",
+      messagingSenderId: "54390898052",
+      appId: "1:54390898052:web:e35ef5feec90efdb5bf1d1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const MAX_DAYS = 21;
+
+    const monthNames = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    const weekDays = ["L", "M", "X", "J", "V", "S", "D"];
+
+    const calendarEl = document.getElementById("calendar");
+    const listEl = document.getElementById("list");
+    const counterEl = document.getElementById("counter");
+    const statusEl = document.getElementById("status");
+    const nameEl = document.getElementById("name");
+    const colorEl = document.getElementById("color");
+    const colorPreviewEl = document.getElementById("colorPreview");
+    const editBtn = document.getElementById("editBtn");
+    const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const clearMineBtn = document.getElementById("clearMineBtn");
+
+    let vacations = {};
+    let tempSelection = new Set();
+    let isMouseDown = false;
+    let dragMode = null; // add | remove
+
+    function normalizeName(value) {
+      return value.trim();
+    }
+
+    function safeKey(name) {
+      return name
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[.#$/[\]]/g, "")
+        .replace(/\s+/g, "-");
+    }
+
+    function makeDateKey(monthIndex, day) {
+      return `2026-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+
+    function getMonthOffset(monthIndex) {
+      const day = new Date(2026, monthIndex, 1).getDay();
+      return day === 0 ? 6 : day - 1;
+    }
+
+    function getEmployeeKeyByName(name) {
+      const target = normalizeName(name).toLowerCase();
+      for (const [key, value] of Object.entries(vacations)) {
+        if ((value.name || "").toLowerCase() === target) {
+          return key;
+        }
+      }
+      return null;
+    }
+
+    function getOccupantByDate(dateKey) {
+      for (const [employeeKey, record] of Object.entries(vacations)) {
+        const dates = Array.isArray(record.dates) ? record.dates : [];
+        if (dates.includes(dateKey)) {
+          return {
+            employeeKey,
+            name: record.name,
+            color: record.color
+          };
+        }
+      }
+      return null;
+    }
+
+    function updateStatus(message) {
+      statusEl.textContent = message;
+    }
+
+    function updateCounter() {
+      counterEl.textContent = `Días seleccionados: ${tempSelection.size} / ${MAX_DAYS}`;
+    }
+
+    function updateColorPreview() {
+      colorPreviewEl.style.backgroundColor = colorEl.value;
+    }
+
+    function formatDate(dateKey) {
+      const [year, month, day] = dateKey.split("-");
+      return `${day}/${month}/${year}`;
+    }
+
+    function renderSavedList() {
+      listEl.innerHTML = "";
+
+      const entries = Object.entries(vacations).sort((a, b) => {
+        return (a[1].name || "").localeCompare(b[1].name || "");
+      });
+
+      if (entries.length === 0) {
+        listEl.innerHTML = `<div class="saved-item">Todavía no hay vacaciones guardadas.</div>`;
+        return;
+      }
+
+      for (const [, record] of entries) {
+        const item = document.createElement("div");
+        item.className = "saved-item";
+
+        const header = document.createElement("div");
+        header.className = "saved-item-header";
+
+        const color = document.createElement("div");
+        color.className = "saved-color";
+        color.style.backgroundColor = record.color || "#cccccc";
+
+        const title = document.createElement("div");
+        title.textContent = `${record.name || "Sin nombre"} (${(record.dates || []).length} días)`;
+
+        header.appendChild(color);
+        header.appendChild(title);
+
+        const dates = document.createElement("div");
+        const sortedDates = [...(record.dates || [])].sort();
+        dates.textContent = sortedDates.length
+          ? sortedDates.map(formatDate).join(", ")
+          : "Sin fechas";
+
+        item.appendChild(header);
+        item.appendChild(dates);
+
+        listEl.appendChild(item);
+      }
+    }
+
+    function renderCalendar() {
+      calendarEl.innerHTML = "";
+
+      const currentName = normalizeName(nameEl.value);
+
+      for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+        const monthEl = document.createElement("section");
+        monthEl.className = "month";
+
+        const title = document.createElement("h3");
+        title.className = "month-title";
+        title.textContent = monthNames[monthIndex];
+
+        const weekdaysEl = document.createElement("div");
+        weekdaysEl.className = "weekdays";
+        for (const wd of weekDays) {
+          const wdEl = document.createElement("div");
+          wdEl.className = "weekday";
+          wdEl.textContent = wd;
+          weekdaysEl.appendChild(wdEl);
+        }
+
+        const grid = document.createElement("div");
+        grid.className = "days-grid";
+
+        const offset = getMonthOffset(monthIndex);
+        for (let i = 0; i < offset; i++) {
+          const empty = document.createElement("div");
+          empty.className = "empty-cell";
+          grid.appendChild(empty);
+        }
+
+        const daysInMonth = new Date(2026, monthIndex + 1, 0).getDate();
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dayEl = document.createElement("div");
+          dayEl.className = "day";
+
+          const dateKey = makeDateKey(monthIndex, day);
+          const occupant = getOccupantByDate(dateKey);
+
+          const number = document.createElement("div");
+          number.className = "day-number";
+          number.textContent = day;
+
+          const name = document.createElement("div");
+          name.className = "day-name";
+
+          if (occupant) {
+            dayEl.style.backgroundColor = occupant.color || "#cccccc";
+            name.textContent = occupant.name || "";
+            if (occupant.name !== currentName) {
+              dayEl.classList.add("blocked");
+            }
+          }
+
+          if (tempSelection.has(dateKey)) {
+            dayEl.style.backgroundColor = colorEl.value;
+            name.textContent = currentName || "Selección";
+            dayEl.classList.add("selected-temp");
+          }
+
+          dayEl.appendChild(number);
+          dayEl.appendChild(name);
+
+          dayEl.addEventListener("mousedown", (event) => {
+            event.preventDefault();
+
+            const currentNameNow = normalizeName(nameEl.value);
+            if (!currentNameNow) {
+              alert("Escribe tu nombre primero.");
+              return;
+            }
+
+            isMouseDown = true;
+
+            const currentOccupant = getOccupantByDate(dateKey);
+            if (currentOccupant && currentOccupant.name !== currentNameNow) {
+              updateStatus(`El día ${formatDate(dateKey)} ya está ocupado por ${currentOccupant.name}.`);
+              return;
+            }
+
+            if (tempSelection.has(dateKey)) {
+              dragMode = "remove";
+              tempSelection.delete(dateKey);
+            } else {
+              if (tempSelection.size >= MAX_DAYS) {
+                updateStatus(`No puedes seleccionar más de ${MAX_DAYS} días.`);
+                return;
+              }
+              dragMode = "add";
+              tempSelection.add(dateKey);
+            }
+
+            updateCounter();
+            renderCalendar();
+          });
+
+          dayEl.addEventListener("mouseenter", () => {
+            if (!isMouseDown || !dragMode) return;
+
+            const currentNameNow = normalizeName(nameEl.value);
+            const currentOccupant = getOccupantByDate(dateKey);
+
+            if (currentOccupant && currentOccupant.name !== currentNameNow) {
+              return;
+            }
+
+            if (dragMode === "add") {
+              if (!tempSelection.has(dateKey) && tempSelection.size < MAX_DAYS) {
+                tempSelection.add(dateKey);
+              }
+            }
+
+            if (dragMode === "remove") {
+              tempSelection.delete(dateKey);
+            }
+
+            updateCounter();
+            renderCalendar();
+          });
+
+          grid.appendChild(dayEl);
+        }
+
+        monthEl.appendChild(title);
+        monthEl.appendChild(weekdaysEl);
+        monthEl.appendChild(grid);
+        calendarEl.appendChild(monthEl);
+      }
+    }
+
+    function renderAll() {
+      updateColorPreview();
+      updateCounter();
+      renderSavedList();
+      renderCalendar();
+    }
+
+    editBtn.addEventListener("click", () => {
+      const currentName = normalizeName(nameEl.value);
+      if (!currentName) {
+        alert("Escribe tu nombre primero.");
+        return;
+      }
+
+      const employeeKey = getEmployeeKeyByName(currentName);
+
+      if (!employeeKey) {
+        tempSelection = new Set();
+        updateStatus(`No hay vacaciones guardadas todavía para ${currentName}.`);
+        renderAll();
+        return;
+      }
+
+      const record = vacations[employeeKey];
+      tempSelection = new Set(record.dates || []);
+      if (record.color) {
+        colorEl.value = record.color;
+      }
+
+      updateStatus(`Editando vacaciones de ${currentName}. Puedes añadir o quitar días.`);
+      renderAll();
+    });
+
+    clearSelectionBtn.addEventListener("click", () => {
+      tempSelection = new Set();
+      updateStatus("Selección temporal borrada.");
+      renderAll();
+    });
+
+    saveBtn.addEventListener("click", async () => {
+      const currentName = normalizeName(nameEl.value);
+      if (!currentName) {
+        alert("Escribe tu nombre.");
+        return;
+      }
+
+      if (tempSelection.size === 0) {
+        alert("Selecciona al menos un día.");
+        return;
+      }
+
+      if (tempSelection.size > MAX_DAYS) {
+        alert(`No puedes guardar más de ${MAX_DAYS} días.`);
+        return;
+      }
+
+      for (const dateKey of tempSelection) {
+        const occupant = getOccupantByDate(dateKey);
+        if (occupant && occupant.name !== currentName) {
+          alert(`No se puede guardar. El día ${formatDate(dateKey)} ya está ocupado por ${occupant.name}.`);
+          return;
+        }
+      }
+
+      const employeeKey = safeKey(currentName);
+
+      await set(ref(db, "vacations/" + employeeKey), {
+        name: currentName,
+        color: colorEl.value,
+        dates: [...tempSelection].sort()
+      });
+
+      updateStatus(`Vacaciones guardadas para ${currentName}.`);
+      tempSelection = new Set();
+    });
+
+    clearMineBtn.addEventListener("click", async () => {
+      const currentName = normalizeName(nameEl.value);
+      if (!currentName) {
+        alert("Escribe tu nombre.");
+        return;
+      }
+
+      const employeeKey = getEmployeeKeyByName(currentName);
+      if (!employeeKey) {
+        alert("No hay vacaciones guardadas para este nombre.");
+        return;
+      }
+
+      const confirmed = confirm(`¿Seguro que quieres borrar todas las vacaciones de ${currentName}?`);
+      if (!confirmed) return;
+
+      await remove(ref(db, "vacations/" + employeeKey));
+      tempSelection = new Set();
+      updateStatus(`Vacaciones borradas para ${currentName}.`);
+    });
+
+    colorEl.addEventListener("input", () => {
+      updateColorPreview();
+      renderCalendar();
+    });
+
+    nameEl.addEventListener("input", () => {
+      renderCalendar();
+    });
+
+    document.addEventListener("mouseup", () => {
+      isMouseDown = false;
+      dragMode = null;
+    });
+
+    document.addEventListener("mouseleave", () => {
+      isMouseDown = false;
+      dragMode = null;
+    });
+
+    onValue(ref(db, "vacations"), (snapshot) => {
+      vacations = snapshot.val() || {};
+      renderAll();
+    });
+
+    renderAll();
+  </script>
 </body>
 </html>
