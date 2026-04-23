@@ -23,7 +23,7 @@
     }
 
     .sidebar {
-      width: 320px;
+      width: 360px;
       background: #ffffff;
       border-right: 1px solid #d9dce1;
       padding: 18px;
@@ -49,6 +49,7 @@
       margin-bottom: 6px;
     }
 
+    .select-input,
     .text-input,
     .btn,
     .color-input {
@@ -58,6 +59,7 @@
       font-size: 15px;
     }
 
+    .select-input,
     .text-input {
       padding: 11px 12px;
       background: #fff;
@@ -114,13 +116,23 @@
       padding: 10px 12px;
       font-size: 14px;
       margin: 14px 0;
-      line-height: 1.4;
+      line-height: 1.45;
     }
 
     .counter {
       font-size: 16px;
       font-weight: 700;
       margin: 12px 0 18px;
+    }
+
+    .role-box {
+      padding: 10px 12px;
+      border: 1px solid #dde2e8;
+      border-radius: 10px;
+      background: #f7f8fa;
+      font-size: 14px;
+      margin-bottom: 14px;
+      line-height: 1.4;
     }
 
     .saved-list-title {
@@ -135,7 +147,7 @@
       padding: 10px;
       margin-bottom: 10px;
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.45;
     }
 
     .saved-item-header {
@@ -150,8 +162,14 @@
       width: 14px;
       height: 14px;
       border-radius: 4px;
-      border: 1px solid rgba(0,0,0,0.15);
+      border: 1px solid rgba(0, 0, 0, 0.15);
       flex-shrink: 0;
+    }
+
+    .saved-item-subtitle {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 6px;
     }
 
     .calendar-wrap {
@@ -171,7 +189,7 @@
       border: 1px solid #d9dce1;
       border-radius: 14px;
       padding: 12px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     }
 
     .month-title {
@@ -196,11 +214,11 @@
     }
 
     .empty-cell {
-      min-height: 52px;
+      min-height: 56px;
     }
 
     .day {
-      min-height: 58px;
+      min-height: 62px;
       border: 1px solid #d8dde6;
       border-radius: 10px;
       background: #fff;
@@ -210,12 +228,12 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.05s ease, box-shadow 0.12s ease;
+      transition: box-shadow 0.12s ease, transform 0.05s ease;
       overflow: hidden;
     }
 
     .day:hover {
-      box-shadow: 0 0 0 2px rgba(31,111,235,0.12);
+      box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.12);
     }
 
     .day.blocked {
@@ -240,6 +258,13 @@
       text-align: center;
       word-break: break-word;
       padding: 0 2px 2px;
+    }
+
+    .helper {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+      line-height: 1.35;
     }
 
     @media (max-width: 1200px) {
@@ -273,8 +298,22 @@
       <h2>Calendario 2026</h2>
 
       <div class="field">
-        <label for="name">Nombre</label>
-        <input id="name" class="text-input" type="text" placeholder="Escribe tu nombre" />
+        <label for="employeeSelect">Empleado</label>
+        <select id="employeeSelect" class="select-input"></select>
+      </div>
+
+      <div class="field">
+        <label for="pinInput">PIN</label>
+        <input id="pinInput" class="text-input" type="password" placeholder="Introduce tu PIN" />
+      </div>
+
+      <div class="field" id="targetField" style="display: none;">
+        <label for="targetSelect">Editar vacaciones de</label>
+        <select id="targetSelect" class="select-input"></select>
+      </div>
+
+      <div class="role-box" id="roleInfo">
+        Selecciona tu nombre y tu PIN para poder editar vacaciones.
       </div>
 
       <div class="field">
@@ -283,17 +322,20 @@
           <input id="color" class="color-input" type="color" value="#22c55e" />
           <div id="colorPreview" class="color-preview"></div>
         </div>
+        <div class="helper">
+          Puedes cambiar el color de tus vacaciones antes de guardar.
+        </div>
       </div>
 
-      <button class="btn" id="editBtn">Editar mis vacaciones</button>
+      <button class="btn" id="editBtn">Editar vacaciones</button>
       <button class="btn" id="clearSelectionBtn">Limpiar selección</button>
       <button class="btn primary" id="saveBtn">Guardar vacaciones</button>
-      <button class="btn" id="clearMineBtn">Borrar mis vacaciones</button>
+      <button class="btn" id="clearMineBtn">Borrar vacaciones</button>
 
       <div class="counter" id="counter">Días seleccionados: 0 / 21</div>
 
       <div class="status" id="status">
-        Escribe tu nombre, elige un color y selecciona tus días.
+        Selecciona tu nombre, escribe tu PIN y elige los días de vacaciones.
       </div>
 
       <h3 class="saved-list-title">Vacaciones</h3>
@@ -322,6 +364,70 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    const EMPLOYEES = [
+      {
+        id: "igor",
+        shortName: "Igor",
+        fullName: "Igor Liebiediev",
+        role: "gerente",
+        aliases: ["Igor", "Igor Liebiediev", "Liebiediev"],
+        pin: "3454",
+        color: "#22c55e",
+        admin: true
+      },
+      {
+        id: "victor-alexis",
+        shortName: "Victor",
+        fullName: "Victor Alexis Mantilla Bueno",
+        role: "encargado",
+        aliases: ["Victor", "Alexis", "Victor Alexis", "Victor Alexis Mantilla Bueno", "Mantilla"],
+        pin: "2231",
+        color: "#14b8a6",
+        admin: false
+      },
+      {
+        id: "jimmy",
+        shortName: "Jimmy",
+        fullName: "Jimmy Caizaguano Palomo",
+        role: "ayudante de cocina",
+        aliases: ["Jimmy", "Jimmy Caizaguano", "Jimmy Caizaguano Palomo", "Caizaguano"],
+        pin: "0213",
+        color: "#f59e0b",
+        admin: false
+      },
+      {
+        id: "tamara",
+        shortName: "Tamara",
+        fullName: "Chirley Tamara Mendoza Espinoza",
+        role: "camarera",
+        aliases: ["Tamara", "Chirley", "Chirley Tamara", "Chirley Tamara Mendoza Espinoza"],
+        pin: "2162",
+        color: "#ef4444",
+        admin: false
+      },
+      {
+        id: "lorena",
+        shortName: "Lorena",
+        fullName: "Lorena Rojas Claure",
+        role: "camarera",
+        aliases: ["Lorena", "Lorena Rojas", "Lorena Rojas Claure", "Rojas"],
+        pin: "1211",
+        color: "#a855f7",
+        admin: false
+      },
+      {
+        id: "deiner",
+        shortName: "Deiner",
+        fullName: "Deiner Javier Uyuquipa Rios",
+        role: "ayudante de cocina",
+        aliases: ["Deiner", "Deiner Javier", "Deiner Javier Uyuquipa Rios", "Uyuquipa"],
+        pin: "6805",
+        color: "#3b82f6",
+        admin: false
+      }
+    ];
+
+    const EMPLOYEE_MAP = Object.fromEntries(EMPLOYEES.map(emp => [emp.id, emp]));
     const MAX_DAYS = 21;
 
     const monthNames = [
@@ -335,64 +441,89 @@
     const listEl = document.getElementById("list");
     const counterEl = document.getElementById("counter");
     const statusEl = document.getElementById("status");
-    const nameEl = document.getElementById("name");
     const colorEl = document.getElementById("color");
     const colorPreviewEl = document.getElementById("colorPreview");
     const editBtn = document.getElementById("editBtn");
     const clearSelectionBtn = document.getElementById("clearSelectionBtn");
     const saveBtn = document.getElementById("saveBtn");
     const clearMineBtn = document.getElementById("clearMineBtn");
+    const employeeSelectEl = document.getElementById("employeeSelect");
+    const targetSelectEl = document.getElementById("targetSelect");
+    const targetFieldEl = document.getElementById("targetField");
+    const pinInputEl = document.getElementById("pinInput");
+    const roleInfoEl = document.getElementById("roleInfo");
+
+    const dayElements = new Map();
 
     let vacations = {};
     let tempSelection = new Set();
     let isMouseDown = false;
-    let dragMode = null; // add | remove
+    let dragMode = null;
 
-    function normalizeName(value) {
-      return value.trim();
-    }
-
-    function safeKey(name) {
-      return name
+    function normalizeText(value) {
+      return (value || "")
         .trim()
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[.#$/[\]]/g, "")
-        .replace(/\s+/g, "-");
+        .replace(/[\u0300-\u036f]/g, "");
     }
 
-    function makeDateKey(monthIndex, day) {
-      return `2026-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    }
+    function populateSelects() {
+      employeeSelectEl.innerHTML = "";
+      targetSelectEl.innerHTML = "";
 
-    function getMonthOffset(monthIndex) {
-      const day = new Date(2026, monthIndex, 1).getDay();
-      return day === 0 ? 6 : day - 1;
-    }
+      for (const emp of EMPLOYEES) {
+        const optionUser = document.createElement("option");
+        optionUser.value = emp.id;
+        optionUser.textContent = emp.shortName;
+        employeeSelectEl.appendChild(optionUser);
 
-    function getEmployeeKeyByName(name) {
-      const target = normalizeName(name).toLowerCase();
-      for (const [key, value] of Object.entries(vacations)) {
-        if ((value.name || "").toLowerCase() === target) {
-          return key;
-        }
+        const optionTarget = document.createElement("option");
+        optionTarget.value = emp.id;
+        optionTarget.textContent = emp.shortName;
+        targetSelectEl.appendChild(optionTarget);
       }
-      return null;
+
+      employeeSelectEl.value = "igor";
+      targetSelectEl.value = "igor";
     }
 
-    function getOccupantByDate(dateKey) {
-      for (const [employeeKey, record] of Object.entries(vacations)) {
-        const dates = Array.isArray(record.dates) ? record.dates : [];
-        if (dates.includes(dateKey)) {
-          return {
-            employeeKey,
-            name: record.name,
-            color: record.color
-          };
-        }
+    function getSelectedEmployee() {
+      return EMPLOYEE_MAP[employeeSelectEl.value] || null;
+    }
+
+    function getTargetEmployee() {
+      const current = getSelectedEmployee();
+      if (!current) return null;
+      return current.admin ? (EMPLOYEE_MAP[targetSelectEl.value] || null) : current;
+    }
+
+    function isAuthenticated() {
+      const current = getSelectedEmployee();
+      if (!current) return false;
+      return pinInputEl.value.trim() === current.pin;
+    }
+
+    function updateRoleUI() {
+      const current = getSelectedEmployee();
+      if (!current) return;
+
+      targetFieldEl.style.display = current.admin ? "block" : "none";
+
+      if (current.admin) {
+        roleInfoEl.textContent = `${current.shortName} (${current.role}) puede editar las vacaciones de cualquier empleado.`;
+      } else {
+        roleInfoEl.textContent = `${current.shortName} (${current.role}) solo puede editar sus propias vacaciones.`;
       }
-      return null;
+
+      const target = getTargetEmployee();
+      if (target && tempSelection.size === 0) {
+        colorEl.value = getStoredOrDefaultColor(target.id);
+      }
+
+      updateColorPreview();
+      updateDayStates();
+      renderSavedList();
     }
 
     function updateStatus(message) {
@@ -407,16 +538,57 @@
       colorPreviewEl.style.backgroundColor = colorEl.value;
     }
 
+    function makeDateKey(monthIndex, day) {
+      return `2026-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+
+    function getMonthOffset(monthIndex) {
+      const day = new Date(2026, monthIndex, 1).getDay();
+      return day === 0 ? 6 : day - 1;
+    }
+
     function formatDate(dateKey) {
       const [year, month, day] = dateKey.split("-");
       return `${day}/${month}/${year}`;
+    }
+
+    function getOccupantByDate(dateKey) {
+      for (const [employeeId, record] of Object.entries(vacations)) {
+        const dates = Array.isArray(record.dates) ? record.dates : [];
+        if (dates.includes(dateKey)) {
+          return {
+            employeeId,
+            shortName: record.shortName || employeeId,
+            fullName: record.fullName || record.shortName || employeeId,
+            role: record.role || "",
+            color: record.color || "#cccccc"
+          };
+        }
+      }
+      return null;
+    }
+
+    function getStoredOrDefaultColor(employeeId) {
+      if (vacations[employeeId]?.color) return vacations[employeeId].color;
+      return EMPLOYEE_MAP[employeeId]?.color || "#22c55e";
+    }
+
+    function canTargetEditDate(dateKey) {
+      const target = getTargetEmployee();
+      if (!target) return false;
+
+      const occupant = getOccupantByDate(dateKey);
+      if (!occupant) return true;
+      return occupant.employeeId === target.id;
     }
 
     function renderSavedList() {
       listEl.innerHTML = "";
 
       const entries = Object.entries(vacations).sort((a, b) => {
-        return (a[1].name || "").localeCompare(b[1].name || "");
+        const aName = a[1].shortName || "";
+        const bName = b[1].shortName || "";
+        return normalizeText(aName).localeCompare(normalizeText(bName));
       });
 
       if (entries.length === 0) {
@@ -424,7 +596,7 @@
         return;
       }
 
-      for (const [, record] of entries) {
+      for (const [employeeId, record] of entries) {
         const item = document.createElement("div");
         item.className = "saved-item";
 
@@ -436,10 +608,14 @@
         color.style.backgroundColor = record.color || "#cccccc";
 
         const title = document.createElement("div");
-        title.textContent = `${record.name || "Sin nombre"} (${(record.dates || []).length} días)`;
+        title.textContent = `${record.shortName || employeeId} (${(record.dates || []).length} días)`;
 
         header.appendChild(color);
         header.appendChild(title);
+
+        const subtitle = document.createElement("div");
+        subtitle.className = "saved-item-subtitle";
+        subtitle.textContent = `${record.fullName || ""}${record.role ? " • " + record.role : ""}`;
 
         const dates = document.createElement("div");
         const sortedDates = [...(record.dates || [])].sort();
@@ -448,16 +624,15 @@
           : "Sin fechas";
 
         item.appendChild(header);
+        item.appendChild(subtitle);
         item.appendChild(dates);
-
         listEl.appendChild(item);
       }
     }
 
-    function renderCalendar() {
+    function createCalendar() {
       calendarEl.innerHTML = "";
-
-      const currentName = normalizeName(nameEl.value);
+      dayElements.clear();
 
       for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
         const monthEl = document.createElement("section");
@@ -469,6 +644,7 @@
 
         const weekdaysEl = document.createElement("div");
         weekdaysEl.className = "weekdays";
+
         for (const wd of weekDays) {
           const wdEl = document.createElement("div");
           wdEl.className = "weekday";
@@ -489,93 +665,32 @@
         const daysInMonth = new Date(2026, monthIndex + 1, 0).getDate();
 
         for (let day = 1; day <= daysInMonth; day++) {
+          const dateKey = makeDateKey(monthIndex, day);
+
           const dayEl = document.createElement("div");
           dayEl.className = "day";
+          dayEl.dataset.dateKey = dateKey;
 
-          const dateKey = makeDateKey(monthIndex, day);
-          const occupant = getOccupantByDate(dateKey);
+          const numberEl = document.createElement("div");
+          numberEl.className = "day-number";
+          numberEl.textContent = String(day);
 
-          const number = document.createElement("div");
-          number.className = "day-number";
-          number.textContent = day;
+          const nameEl = document.createElement("div");
+          nameEl.className = "day-name";
 
-          const name = document.createElement("div");
-          name.className = "day-name";
-
-          if (occupant) {
-            dayEl.style.backgroundColor = occupant.color || "#cccccc";
-            name.textContent = occupant.name || "";
-            if (occupant.name !== currentName) {
-              dayEl.classList.add("blocked");
-            }
-          }
-
-          if (tempSelection.has(dateKey)) {
-            dayEl.style.backgroundColor = colorEl.value;
-            name.textContent = currentName || "Selección";
-            dayEl.classList.add("selected-temp");
-          }
-
-          dayEl.appendChild(number);
-          dayEl.appendChild(name);
+          dayEl.appendChild(numberEl);
+          dayEl.appendChild(nameEl);
 
           dayEl.addEventListener("mousedown", (event) => {
             event.preventDefault();
-
-            const currentNameNow = normalizeName(nameEl.value);
-            if (!currentNameNow) {
-              alert("Escribe tu nombre primero.");
-              return;
-            }
-
-            isMouseDown = true;
-
-            const currentOccupant = getOccupantByDate(dateKey);
-            if (currentOccupant && currentOccupant.name !== currentNameNow) {
-              updateStatus(`El día ${formatDate(dateKey)} ya está ocupado por ${currentOccupant.name}.`);
-              return;
-            }
-
-            if (tempSelection.has(dateKey)) {
-              dragMode = "remove";
-              tempSelection.delete(dateKey);
-            } else {
-              if (tempSelection.size >= MAX_DAYS) {
-                updateStatus(`No puedes seleccionar más de ${MAX_DAYS} días.`);
-                return;
-              }
-              dragMode = "add";
-              tempSelection.add(dateKey);
-            }
-
-            updateCounter();
-            renderCalendar();
+            handleDayMouseDown(dateKey);
           });
 
           dayEl.addEventListener("mouseenter", () => {
-            if (!isMouseDown || !dragMode) return;
-
-            const currentNameNow = normalizeName(nameEl.value);
-            const currentOccupant = getOccupantByDate(dateKey);
-
-            if (currentOccupant && currentOccupant.name !== currentNameNow) {
-              return;
-            }
-
-            if (dragMode === "add") {
-              if (!tempSelection.has(dateKey) && tempSelection.size < MAX_DAYS) {
-                tempSelection.add(dateKey);
-              }
-            }
-
-            if (dragMode === "remove") {
-              tempSelection.delete(dateKey);
-            }
-
-            updateCounter();
-            renderCalendar();
+            handleDayMouseEnter(dateKey);
           });
 
+          dayElements.set(dateKey, { dayEl, nameEl });
           grid.appendChild(dayEl);
         }
 
@@ -584,51 +699,144 @@
         monthEl.appendChild(grid);
         calendarEl.appendChild(monthEl);
       }
+
+      updateDayStates();
     }
 
-    function renderAll() {
-      updateColorPreview();
+    function updateDayStates() {
+      const target = getTargetEmployee();
+      const targetName = target ? target.shortName : "";
+
+      for (const [dateKey, refs] of dayElements.entries()) {
+        const { dayEl, nameEl } = refs;
+
+        dayEl.classList.remove("blocked", "selected-temp");
+        dayEl.style.backgroundColor = "#fff";
+        nameEl.textContent = "";
+
+        const occupant = getOccupantByDate(dateKey);
+
+        if (occupant) {
+          dayEl.style.backgroundColor = occupant.color;
+          nameEl.textContent = occupant.shortName;
+
+          if (!target || occupant.employeeId !== target.id) {
+            dayEl.classList.add("blocked");
+          }
+        }
+
+        if (tempSelection.has(dateKey)) {
+          dayEl.style.backgroundColor = colorEl.value;
+          nameEl.textContent = targetName || "Selección";
+          dayEl.classList.add("selected-temp");
+        }
+      }
+
       updateCounter();
-      renderSavedList();
-      renderCalendar();
+      updateColorPreview();
+    }
+
+    function handleDayMouseDown(dateKey) {
+      const target = getTargetEmployee();
+      if (!target) {
+        alert("Selecciona un empleado.");
+        return;
+      }
+
+      if (!isAuthenticated()) {
+        alert("PIN incorrecto.");
+        return;
+      }
+
+      if (!canTargetEditDate(dateKey)) {
+        const occupant = getOccupantByDate(dateKey);
+        updateStatus(`El día ${formatDate(dateKey)} ya está ocupado por ${occupant?.shortName || "otro empleado"}.`);
+        isMouseDown = false;
+        dragMode = null;
+        return;
+      }
+
+      isMouseDown = true;
+
+      if (tempSelection.has(dateKey)) {
+        dragMode = "remove";
+        tempSelection.delete(dateKey);
+      } else {
+        if (tempSelection.size >= MAX_DAYS) {
+          updateStatus(`No puedes seleccionar más de ${MAX_DAYS} días.`);
+          isMouseDown = false;
+          dragMode = null;
+          return;
+        }
+        dragMode = "add";
+        tempSelection.add(dateKey);
+      }
+
+      updateDayStates();
+    }
+
+    function handleDayMouseEnter(dateKey) {
+      if (!isMouseDown || !dragMode) return;
+
+      const target = getTargetEmployee();
+      if (!target || !isAuthenticated()) return;
+
+      if (!canTargetEditDate(dateKey)) return;
+
+      if (dragMode === "add") {
+        if (!tempSelection.has(dateKey) && tempSelection.size < MAX_DAYS) {
+          tempSelection.add(dateKey);
+        }
+      } else if (dragMode === "remove") {
+        tempSelection.delete(dateKey);
+      }
+
+      updateDayStates();
     }
 
     editBtn.addEventListener("click", () => {
-      const currentName = normalizeName(nameEl.value);
-      if (!currentName) {
-        alert("Escribe tu nombre primero.");
+      const target = getTargetEmployee();
+      if (!target) {
+        alert("Selecciona un empleado.");
         return;
       }
 
-      const employeeKey = getEmployeeKeyByName(currentName);
+      if (!isAuthenticated()) {
+        alert("PIN incorrecto.");
+        return;
+      }
 
-      if (!employeeKey) {
+      const record = vacations[target.id];
+
+      if (!record) {
         tempSelection = new Set();
-        updateStatus(`No hay vacaciones guardadas todavía para ${currentName}.`);
-        renderAll();
+        colorEl.value = getStoredOrDefaultColor(target.id);
+        updateStatus(`No hay vacaciones guardadas todavía para ${target.shortName}.`);
+        updateDayStates();
         return;
       }
 
-      const record = vacations[employeeKey];
       tempSelection = new Set(record.dates || []);
-      if (record.color) {
-        colorEl.value = record.color;
-      }
-
-      updateStatus(`Editando vacaciones de ${currentName}. Puedes añadir o quitar días.`);
-      renderAll();
+      colorEl.value = record.color || getStoredOrDefaultColor(target.id);
+      updateStatus(`Editando vacaciones de ${target.shortName}. Puedes añadir o quitar días.`);
+      updateDayStates();
     });
 
     clearSelectionBtn.addEventListener("click", () => {
       tempSelection = new Set();
       updateStatus("Selección temporal borrada.");
-      renderAll();
+      updateDayStates();
     });
 
     saveBtn.addEventListener("click", async () => {
-      const currentName = normalizeName(nameEl.value);
-      if (!currentName) {
-        alert("Escribe tu nombre.");
+      const target = getTargetEmployee();
+      if (!target) {
+        alert("Selecciona un empleado.");
+        return;
+      }
+
+      if (!isAuthenticated()) {
+        alert("PIN incorrecto.");
         return;
       }
 
@@ -644,52 +852,78 @@
 
       for (const dateKey of tempSelection) {
         const occupant = getOccupantByDate(dateKey);
-        if (occupant && occupant.name !== currentName) {
-          alert(`No se puede guardar. El día ${formatDate(dateKey)} ya está ocupado por ${occupant.name}.`);
+        if (occupant && occupant.employeeId !== target.id) {
+          alert(`No se puede guardar. El día ${formatDate(dateKey)} ya está ocupado por ${occupant.shortName}.`);
           return;
         }
       }
 
-      const employeeKey = safeKey(currentName);
-
-      await set(ref(db, "vacations/" + employeeKey), {
-        name: currentName,
+      await set(ref(db, "vacations/" + target.id), {
+        shortName: target.shortName,
+        fullName: target.fullName,
+        role: target.role,
+        aliases: target.aliases,
         color: colorEl.value,
         dates: [...tempSelection].sort()
       });
 
-      updateStatus(`Vacaciones guardadas para ${currentName}.`);
+      updateStatus(`Vacaciones guardadas para ${target.shortName}.`);
       tempSelection = new Set();
+      updateDayStates();
     });
 
     clearMineBtn.addEventListener("click", async () => {
-      const currentName = normalizeName(nameEl.value);
-      if (!currentName) {
-        alert("Escribe tu nombre.");
+      const target = getTargetEmployee();
+      if (!target) {
+        alert("Selecciona un empleado.");
         return;
       }
 
-      const employeeKey = getEmployeeKeyByName(currentName);
-      if (!employeeKey) {
-        alert("No hay vacaciones guardadas para este nombre.");
+      if (!isAuthenticated()) {
+        alert("PIN incorrecto.");
         return;
       }
 
-      const confirmed = confirm(`¿Seguro que quieres borrar todas las vacaciones de ${currentName}?`);
+      const record = vacations[target.id];
+      if (!record) {
+        alert("No hay vacaciones guardadas para este empleado.");
+        return;
+      }
+
+      const confirmed = confirm(`¿Seguro que quieres borrar todas las vacaciones de ${target.shortName}?`);
       if (!confirmed) return;
 
-      await remove(ref(db, "vacations/" + employeeKey));
+      await remove(ref(db, "vacations/" + target.id));
       tempSelection = new Set();
-      updateStatus(`Vacaciones borradas para ${currentName}.`);
+      updateStatus(`Vacaciones borradas para ${target.shortName}.`);
+      updateDayStates();
     });
 
     colorEl.addEventListener("input", () => {
-      updateColorPreview();
-      renderCalendar();
+      updateDayStates();
     });
 
-    nameEl.addEventListener("input", () => {
-      renderCalendar();
+    employeeSelectEl.addEventListener("change", () => {
+      tempSelection = new Set();
+      const current = getSelectedEmployee();
+      if (current) {
+        colorEl.value = getStoredOrDefaultColor(current.id);
+        if (!current.admin) {
+          targetSelectEl.value = current.id;
+        }
+      }
+      updateRoleUI();
+      updateStatus("Empleado cambiado. Introduce el PIN para editar vacaciones.");
+    });
+
+    targetSelectEl.addEventListener("change", () => {
+      tempSelection = new Set();
+      const target = getTargetEmployee();
+      if (target) {
+        colorEl.value = getStoredOrDefaultColor(target.id);
+      }
+      updateRoleUI();
+      updateStatus("Empleado de destino cambiado.");
     });
 
     document.addEventListener("mouseup", () => {
@@ -704,10 +938,14 @@
 
     onValue(ref(db, "vacations"), (snapshot) => {
       vacations = snapshot.val() || {};
-      renderAll();
+      renderSavedList();
+      updateRoleUI();
     });
 
-    renderAll();
+    populateSelects();
+    createCalendar();
+    colorEl.value = getStoredOrDefaultColor("igor");
+    updateRoleUI();
   </script>
 </body>
 </html>
