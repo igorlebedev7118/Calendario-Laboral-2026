@@ -109,6 +109,16 @@
       background: #185bcc;
     }
 
+    .btn.secondary {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .btn.secondary:hover {
+      background: #1f2937;
+    }
+
     .status {
       background: #f7f8fa;
       border: 1px solid #dde2e8;
@@ -190,6 +200,8 @@
       border-radius: 14px;
       padding: 12px;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .month-title {
@@ -267,6 +279,14 @@
       line-height: 1.35;
     }
 
+    .print-header {
+      display: none;
+    }
+
+    .print-summary {
+      display: none;
+    }
+
     @media (max-width: 1200px) {
       .calendar {
         grid-template-columns: repeat(2, minmax(280px, 1fr));
@@ -288,6 +308,78 @@
 
       .calendar {
         grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .app {
+        display: block;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .calendar-wrap {
+        padding: 0;
+        overflow: visible;
+      }
+
+      .print-header {
+        display: block;
+        margin-bottom: 18px;
+      }
+
+      .print-header h1 {
+        margin: 0 0 8px 0;
+        font-size: 24px;
+      }
+
+      .print-header p {
+        margin: 0;
+        font-size: 12px;
+        color: #444;
+      }
+
+      .print-summary {
+        display: block;
+        margin-bottom: 20px;
+      }
+
+      .print-summary h2 {
+        margin: 0 0 10px 0;
+        font-size: 18px;
+      }
+
+      .print-summary-item {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+
+      .month {
+        box-shadow: none;
+      }
+
+      .day {
+        cursor: default;
+      }
+
+      .helper {
+        display: none;
       }
     }
   </style>
@@ -331,6 +423,7 @@
       <button class="btn" id="clearSelectionBtn">Limpiar selección</button>
       <button class="btn primary" id="saveBtn">Guardar vacaciones</button>
       <button class="btn" id="clearMineBtn">Borrar vacaciones</button>
+      <button class="btn secondary" id="exportPdfBtn">Exportar a PDF</button>
 
       <div class="counter" id="counter">Días seleccionados: 0 / 21</div>
 
@@ -343,6 +436,13 @@
     </aside>
 
     <main class="calendar-wrap">
+      <div class="print-header" id="printHeader">
+        <h1>Calendario de Vacaciones 2026</h1>
+        <p id="printDate"></p>
+      </div>
+
+      <div class="print-summary" id="printSummary"></div>
+
       <div id="calendar" class="calendar"></div>
     </main>
   </div>
@@ -447,11 +547,14 @@
     const clearSelectionBtn = document.getElementById("clearSelectionBtn");
     const saveBtn = document.getElementById("saveBtn");
     const clearMineBtn = document.getElementById("clearMineBtn");
+    const exportPdfBtn = document.getElementById("exportPdfBtn");
     const employeeSelectEl = document.getElementById("employeeSelect");
     const targetSelectEl = document.getElementById("targetSelect");
     const targetFieldEl = document.getElementById("targetField");
     const pinInputEl = document.getElementById("pinInput");
     const roleInfoEl = document.getElementById("roleInfo");
+    const printDateEl = document.getElementById("printDate");
+    const printSummaryEl = document.getElementById("printSummary");
 
     const dayElements = new Map();
 
@@ -524,6 +627,7 @@
       updateColorPreview();
       updateDayStates();
       renderSavedList();
+      renderPrintSummary();
     }
 
     function updateStatus(message) {
@@ -550,6 +654,17 @@
     function formatDate(dateKey) {
       const [year, month, day] = dateKey.split("-");
       return `${day}/${month}/${year}`;
+    }
+
+    function formatExportDate() {
+      const now = new Date();
+      return now.toLocaleString("es-ES", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
     }
 
     function getOccupantByDate(dateKey) {
@@ -627,6 +742,44 @@
         item.appendChild(subtitle);
         item.appendChild(dates);
         listEl.appendChild(item);
+      }
+    }
+
+    function renderPrintSummary() {
+      printSummaryEl.innerHTML = "";
+      printDateEl.textContent = `Fecha de exportación: ${formatExportDate()}`;
+
+      const entries = Object.entries(vacations).sort((a, b) => {
+        const aName = a[1].shortName || "";
+        const bName = b[1].shortName || "";
+        return normalizeText(aName).localeCompare(normalizeText(bName));
+      });
+
+      const title = document.createElement("h2");
+      title.textContent = "Resumen de vacaciones";
+      printSummaryEl.appendChild(title);
+
+      if (entries.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "print-summary-item";
+        empty.textContent = "Todavía no hay vacaciones guardadas.";
+        printSummaryEl.appendChild(empty);
+        return;
+      }
+
+      for (const [, record] of entries) {
+        const item = document.createElement("div");
+        item.className = "print-summary-item";
+
+        const sortedDates = [...(record.dates || [])].sort();
+        item.innerHTML = `
+          <strong>${record.shortName || ""}</strong><br>
+          <span>${record.fullName || ""}${record.role ? " • " + record.role : ""}</span><br>
+          <span>${sortedDates.length} días</span><br>
+          <span>${sortedDates.length ? sortedDates.map(formatDate).join(", ") : "Sin fechas"}</span>
+        `;
+
+        printSummaryEl.appendChild(item);
       }
     }
 
@@ -899,6 +1052,12 @@
       updateDayStates();
     });
 
+    exportPdfBtn.addEventListener("click", () => {
+      renderPrintSummary();
+      printDateEl.textContent = `Fecha de exportación: ${formatExportDate()}`;
+      window.print();
+    });
+
     colorEl.addEventListener("input", () => {
       updateDayStates();
     });
@@ -939,6 +1098,7 @@
     onValue(ref(db, "vacations"), (snapshot) => {
       vacations = snapshot.val() || {};
       renderSavedList();
+      renderPrintSummary();
       updateRoleUI();
     });
 
