@@ -434,665 +434,669 @@
     </main>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAnaz1QNDKh2kQLyMjj1IZ-7GNivIar3Xs",
-      authDomain: "calendario-laboral-2026-5305e.firebaseapp.com",
-      databaseURL: "https://calendario-laboral-2026-5305e-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "calendario-laboral-2026-5305e",
-      storageBucket: "calendario-laboral-2026-5305e.firebasestorage.app",
-      messagingSenderId: "54390898052",
-      appId: "1:54390898052:web:e35ef5feec90efdb5bf1d1"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAnaz1QNDKh2kQLyMjj1IZ-7GNivIar3Xs",
+    authDomain: "calendario-laboral-2026-5305e.firebaseapp.com",
+    databaseURL: "https://calendario-laboral-2026-5305e-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "calendario-laboral-2026-5305e",
+    storageBucket: "calendario-laboral-2026-5305e.firebasestorage.app",
+    messagingSenderId: "54390898052",
+    appId: "1:54390898052:web:e35ef5feec90efdb5bf1d1"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    const EMPLOYEES = [
-      {
-        id: "igor",
-        shortName: "Igor",
-        fullName: "Igor Liebiediev",
-        role: "gerente",
-        aliases: ["Igor", "Igor Liebiediev", "Liebiediev"],
-        pin: "3454",
-        color: "#22c55e",
-        admin: true
-      },
-      {
-        id: "victor-alexis",
-        shortName: "Victor",
-        fullName: "Victor Alexis Mantilla Bueno",
-        role: "encargado",
-        aliases: ["Victor", "Alexis", "Victor Alexis", "Victor Alexis Mantilla Bueno", "Mantilla"],
-        pin: "2231",
-        color: "#14b8a6",
-        admin: false
-      },
-      {
-        id: "jimmy",
-        shortName: "Jimmy",
-        fullName: "Jimmy Caizaguano Palomo",
-        role: "ayudante de cocina",
-        aliases: ["Jimmy", "Jimmy Caizaguano", "Jimmy Caizaguano Palomo", "Caizaguano"],
-        pin: "0213",
-        color: "#f59e0b",
-        admin: false
-      },
-      {
-        id: "tamara",
-        shortName: "Tamara",
-        fullName: "Chirley Tamara Mendoza Espinoza",
-        role: "camarera",
-        aliases: ["Tamara", "Chirley", "Chirley Tamara", "Chirley Tamara Mendoza Espinoza"],
-        pin: "2162",
-        color: "#ef4444",
-        admin: false
-      },
-      {
-        id: "lorena",
-        shortName: "Lorena",
-        fullName: "Lorena Rojas Claure",
-        role: "camarera",
-        aliases: ["Lorena", "Lorena Rojas", "Lorena Rojas Claure", "Rojas"],
-        pin: "1211",
-        color: "#a855f7",
-        admin: false
-      },
-      {
-        id: "deiner",
-        shortName: "Deiner",
-        fullName: "Deiner Javier Uyuquipa Rios",
-        role: "ayudante de cocina",
-        aliases: ["Deiner", "Deiner Javier", "Deiner Javier Uyuquipa Rios", "Uyuquipa"],
-        pin: "6805",
-        color: "#3b82f6",
-        admin: false
-      }
-    ];
+  const EMPLOYEES = [
+    { id: "igor", shortName: "Igor", fullName: "Igor Liebiediev", role: "gerente", aliases: ["Igor", "Igor Liebiediev", "Liebiediev"], pin: "3454", color: "#22c55e", admin: true },
+    { id: "victor-alexis", shortName: "Victor", fullName: "Victor Alexis Mantilla Bueno", role: "encargado", aliases: ["Victor", "Alexis", "Victor Alexis", "Victor Alexis Mantilla Bueno", "Mantilla"], pin: "2231", color: "#14b8a6", admin: false },
+    { id: "jimmy", shortName: "Jimmy", fullName: "Jimmy Caizaguano Palomo", role: "ayudante de cocina", aliases: ["Jimmy", "Jimmy Caizaguano", "Jimmy Caizaguano Palomo", "Caizaguano"], pin: "0213", color: "#f59e0b", admin: false },
+    { id: "tamara", shortName: "Tamara", fullName: "Chirley Tamara Mendoza Espinoza", role: "camarera", aliases: ["Tamara", "Chirley", "Chirley Tamara", "Chirley Tamara Mendoza Espinoza"], pin: "2162", color: "#ef4444", admin: false },
+    { id: "lorena", shortName: "Lorena", fullName: "Lorena Rojas Claure", role: "camarera", aliases: ["Lorena", "Lorena Rojas", "Lorena Rojas Claure", "Rojas"], pin: "1211", color: "#a855f7", admin: false },
+    { id: "deiner", shortName: "Deiner", fullName: "Deiner Javier Uyuquipa Rios", role: "ayudante de cocina", aliases: ["Deiner", "Deiner Javier", "Deiner Javier Uyuquipa Rios", "Uyuquipa"], pin: "6805", color: "#3b82f6", admin: false }
+  ];
 
-    const EMPLOYEE_MAP = Object.fromEntries(EMPLOYEES.map(emp => [emp.id, emp]));
-    const MAX_DAYS = 21;
+  const EMPLOYEE_MAP = Object.fromEntries(EMPLOYEES.map(emp => [emp.id, emp]));
 
-    const monthNames = [
-      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    ];
+  const MAX_SINGLE_VACATION = 21;
+  const MAX_TOTAL_DAYS = 30;
 
-    const weekDays = ["L", "M", "X", "J", "V", "S", "D"];
+  const monthNames = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
 
-    const calendarEl = document.getElementById("calendar");
-    const listEl = document.getElementById("list");
-    const counterEl = document.getElementById("counter");
-    const statusEl = document.getElementById("status");
-    const colorEl = document.getElementById("color");
-    const colorPreviewEl = document.getElementById("colorPreview");
-    const editBtn = document.getElementById("editBtn");
-    const clearSelectionBtn = document.getElementById("clearSelectionBtn");
-    const saveBtn = document.getElementById("saveBtn");
-    const clearMineBtn = document.getElementById("clearMineBtn");
-    const exportPdfBtn = document.getElementById("exportPdfBtn");
-    const employeeSelectEl = document.getElementById("employeeSelect");
-    const targetSelectEl = document.getElementById("targetSelect");
-    const targetFieldEl = document.getElementById("targetField");
-    const pinInputEl = document.getElementById("pinInput");
-    const roleInfoEl = document.getElementById("roleInfo");
-    const printDateEl = document.getElementById("printDate");
-    const printSummaryEl = document.getElementById("printSummary");
+  const weekDays = ["L", "M", "X", "J", "V", "S", "D"];
 
-    const dayElements = new Map();
+  const calendarEl = document.getElementById("calendar");
+  const listEl = document.getElementById("list");
+  const counterEl = document.getElementById("counter");
+  const statusEl = document.getElementById("status");
+  const colorEl = document.getElementById("color");
+  const colorPreviewEl = document.getElementById("colorPreview");
+  const editBtn = document.getElementById("editBtn");
+  const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const clearMineBtn = document.getElementById("clearMineBtn");
+  const exportPdfBtn = document.getElementById("exportPdfBtn");
+  const employeeSelectEl = document.getElementById("employeeSelect");
+  const targetSelectEl = document.getElementById("targetSelect");
+  const targetFieldEl = document.getElementById("targetField");
+  const pinInputEl = document.getElementById("pinInput");
+  const roleInfoEl = document.getElementById("roleInfo");
+  const printDateEl = document.getElementById("printDate");
+  const printSummaryEl = document.getElementById("printSummary");
 
-    let vacations = {};
-    let tempSelection = new Set();
-    let isMouseDown = false;
-    let dragMode = null;
+  const dayElements = new Map();
 
-    function normalizeText(value) {
-      return (value || "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+  let vacations = {};
+  let tempSelection = new Set();
+  let isMouseDown = false;
+  let dragMode = null;
+
+  function normalizeText(value) {
+    return (value || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function populateSelects() {
+    employeeSelectEl.innerHTML = "";
+    targetSelectEl.innerHTML = "";
+
+    for (const emp of EMPLOYEES) {
+      const optionUser = document.createElement("option");
+      optionUser.value = emp.id;
+      optionUser.textContent = emp.shortName;
+      employeeSelectEl.appendChild(optionUser);
+
+      const optionTarget = document.createElement("option");
+      optionTarget.value = emp.id;
+      optionTarget.textContent = emp.shortName;
+      targetSelectEl.appendChild(optionTarget);
     }
 
-    function populateSelects() {
-      employeeSelectEl.innerHTML = "";
-      targetSelectEl.innerHTML = "";
+    employeeSelectEl.value = "igor";
+    targetSelectEl.value = "igor";
+  }
 
-      for (const emp of EMPLOYEES) {
-        const optionUser = document.createElement("option");
-        optionUser.value = emp.id;
-        optionUser.textContent = emp.shortName;
-        employeeSelectEl.appendChild(optionUser);
+  function getSelectedEmployee() {
+    return EMPLOYEE_MAP[employeeSelectEl.value] || null;
+  }
 
-        const optionTarget = document.createElement("option");
-        optionTarget.value = emp.id;
-        optionTarget.textContent = emp.shortName;
-        targetSelectEl.appendChild(optionTarget);
-      }
+  function getTargetEmployee() {
+    const current = getSelectedEmployee();
+    if (!current) return null;
+    return current.admin ? (EMPLOYEE_MAP[targetSelectEl.value] || null) : current;
+  }
 
-      employeeSelectEl.value = "igor";
-      targetSelectEl.value = "igor";
+  function isAuthenticated() {
+    const current = getSelectedEmployee();
+    if (!current) return false;
+    return pinInputEl.value.trim() === current.pin;
+  }
+
+  function updateRoleUI() {
+    const current = getSelectedEmployee();
+    if (!current) return;
+
+    targetFieldEl.style.display = current.admin ? "block" : "none";
+
+    if (current.admin) {
+      roleInfoEl.textContent = `${current.shortName} (${current.role}) puede editar las vacaciones de cualquier empleado.`;
+    } else {
+      roleInfoEl.textContent = `${current.shortName} (${current.role}) solo puede editar sus propias vacaciones.`;
     }
 
-    function getSelectedEmployee() {
-      return EMPLOYEE_MAP[employeeSelectEl.value] || null;
+    const target = getTargetEmployee();
+    if (target && tempSelection.size === 0) {
+      colorEl.value = getStoredOrDefaultColor(target.id);
     }
 
-    function getTargetEmployee() {
-      const current = getSelectedEmployee();
-      if (!current) return null;
-      return current.admin ? (EMPLOYEE_MAP[targetSelectEl.value] || null) : current;
-    }
+    updateColorPreview();
+    updateDayStates();
+    renderSavedList();
+    renderPrintSummary();
+  }
 
-    function isAuthenticated() {
-      const current = getSelectedEmployee();
-      if (!current) return false;
-      return pinInputEl.value.trim() === current.pin;
-    }
+  function updateStatus(message) {
+    statusEl.textContent = message;
+  }
 
-    function updateRoleUI() {
-      const current = getSelectedEmployee();
-      if (!current) return;
+  function updateCounter() {
+    const maxBlock = getMaxConsecutiveDays([...tempSelection]);
+    counterEl.textContent =
+      `Total año: ${tempSelection.size}/${MAX_TOTAL_DAYS} | Periodo más largo: ${maxBlock}/${MAX_SINGLE_VACATION}`;
+  }
 
-      targetFieldEl.style.display = current.admin ? "block" : "none";
+  function updateColorPreview() {
+    colorPreviewEl.style.backgroundColor = colorEl.value;
+  }
 
-      if (current.admin) {
-        roleInfoEl.textContent = `${current.shortName} (${current.role}) puede editar las vacaciones de cualquier empleado.`;
+  function makeDateKey(monthIndex, day) {
+    return `2026-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  function getMonthOffset(monthIndex) {
+    const day = new Date(2026, monthIndex, 1).getDay();
+    return day === 0 ? 6 : day - 1;
+  }
+
+  function formatDate(dateKey) {
+    const [year, month, day] = dateKey.split("-");
+    return `${day}/${month}/${year}`;
+  }
+
+  function formatExportDate() {
+    const now = new Date();
+    return now.toLocaleString("es-ES", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function getMaxConsecutiveDays(dateKeys) {
+    if (!dateKeys.length) return 0;
+
+    const sorted = [...dateKeys].sort();
+    let max = 1;
+    let current = 1;
+
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = new Date(sorted[i - 1] + "T00:00:00");
+      const curr = new Date(sorted[i] + "T00:00:00");
+      const diffDays = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        current++;
       } else {
-        roleInfoEl.textContent = `${current.shortName} (${current.role}) solo puede editar sus propias vacaciones.`;
+        current = 1;
       }
 
-      const target = getTargetEmployee();
-      if (target && tempSelection.size === 0) {
-        colorEl.value = getStoredOrDefaultColor(target.id);
+      if (current > max) max = current;
+    }
+
+    return max;
+  }
+
+  function canAddDateWithoutBreakingLimits(dateKey) {
+    const testSet = new Set(tempSelection);
+    testSet.add(dateKey);
+
+    if (testSet.size > MAX_TOTAL_DAYS) {
+      updateStatus(`No puedes seleccionar más de ${MAX_TOTAL_DAYS} días de vacaciones al año.`);
+      return false;
+    }
+
+    const maxBlock = getMaxConsecutiveDays([...testSet]);
+
+    if (maxBlock > MAX_SINGLE_VACATION) {
+      updateStatus(`Una sola vacación no puede superar ${MAX_SINGLE_VACATION} días seguidos.`);
+      return false;
+    }
+
+    return true;
+  }
+
+  function getOccupantByDate(dateKey) {
+    for (const [employeeId, record] of Object.entries(vacations)) {
+      const dates = Array.isArray(record.dates) ? record.dates : [];
+      if (dates.includes(dateKey)) {
+        return {
+          employeeId,
+          shortName: record.shortName || employeeId,
+          fullName: record.fullName || record.shortName || employeeId,
+          role: record.role || "",
+          color: record.color || "#cccccc"
+        };
+      }
+    }
+    return null;
+  }
+
+  function getStoredOrDefaultColor(employeeId) {
+    if (vacations[employeeId]?.color) return vacations[employeeId].color;
+    return EMPLOYEE_MAP[employeeId]?.color || "#22c55e";
+  }
+
+  function canTargetEditDate(dateKey) {
+    const target = getTargetEmployee();
+    if (!target) return false;
+
+    const occupant = getOccupantByDate(dateKey);
+    if (!occupant) return true;
+    return occupant.employeeId === target.id;
+  }
+
+  function renderSavedList() {
+    listEl.innerHTML = "";
+
+    const entries = Object.entries(vacations).sort((a, b) => {
+      const aName = a[1].shortName || "";
+      const bName = b[1].shortName || "";
+      return normalizeText(aName).localeCompare(normalizeText(bName));
+    });
+
+    if (entries.length === 0) {
+      listEl.innerHTML = `<div class="saved-item">Todavía no hay vacaciones guardadas.</div>`;
+      return;
+    }
+
+    for (const [employeeId, record] of entries) {
+      const item = document.createElement("div");
+      item.className = "saved-item";
+
+      const header = document.createElement("div");
+      header.className = "saved-item-header";
+
+      const color = document.createElement("div");
+      color.className = "saved-color";
+      color.style.backgroundColor = record.color || "#cccccc";
+
+      const title = document.createElement("div");
+      const total = (record.dates || []).length;
+      const longest = getMaxConsecutiveDays(record.dates || []);
+      title.textContent = `${record.shortName || employeeId} (${total}/${MAX_TOTAL_DAYS} días)`;
+
+      header.appendChild(color);
+      header.appendChild(title);
+
+      const subtitle = document.createElement("div");
+      subtitle.className = "saved-item-subtitle";
+      subtitle.textContent =
+        `${record.fullName || ""}${record.role ? " • " + record.role : ""} • periodo más largo: ${longest} días`;
+
+      const dates = document.createElement("div");
+      const sortedDates = [...(record.dates || [])].sort();
+      dates.textContent = sortedDates.length
+        ? sortedDates.map(formatDate).join(", ")
+        : "Sin fechas";
+
+      item.appendChild(header);
+      item.appendChild(subtitle);
+      item.appendChild(dates);
+      listEl.appendChild(item);
+    }
+  }
+
+  function renderPrintSummary() {
+    printSummaryEl.innerHTML = "";
+    printDateEl.textContent = `Fecha de exportación: ${formatExportDate()}`;
+
+    const entries = Object.entries(vacations).sort((a, b) => {
+      const aName = a[1].shortName || "";
+      const bName = b[1].shortName || "";
+      return normalizeText(aName).localeCompare(normalizeText(bName));
+    });
+
+    const title = document.createElement("h2");
+    title.textContent = "Resumen de vacaciones";
+    printSummaryEl.appendChild(title);
+
+    if (entries.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "print-summary-item";
+      empty.textContent = "Todavía no hay vacaciones guardadas.";
+      printSummaryEl.appendChild(empty);
+      return;
+    }
+
+    for (const [, record] of entries) {
+      const item = document.createElement("div");
+      item.className = "print-summary-item";
+
+      const sortedDates = [...(record.dates || [])].sort();
+      const longest = getMaxConsecutiveDays(sortedDates);
+
+      item.innerHTML = `
+        <strong>${record.shortName || ""}</strong><br>
+        <span>${record.fullName || ""}${record.role ? " • " + record.role : ""}</span><br>
+        <span>Total: ${sortedDates.length}/${MAX_TOTAL_DAYS} días</span><br>
+        <span>Periodo más largo: ${longest}/${MAX_SINGLE_VACATION} días</span><br>
+        <span>${sortedDates.length ? sortedDates.map(formatDate).join(", ") : "Sin fechas"}</span>
+      `;
+
+      printSummaryEl.appendChild(item);
+    }
+  }
+
+  function createCalendar() {
+    calendarEl.innerHTML = "";
+    dayElements.clear();
+
+    for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+      const monthEl = document.createElement("section");
+      monthEl.className = "month";
+
+      const title = document.createElement("h3");
+      title.className = "month-title";
+      title.textContent = monthNames[monthIndex];
+
+      const weekdaysEl = document.createElement("div");
+      weekdaysEl.className = "weekdays";
+
+      for (const wd of weekDays) {
+        const wdEl = document.createElement("div");
+        wdEl.className = "weekday";
+        wdEl.textContent = wd;
+        weekdaysEl.appendChild(wdEl);
       }
 
-      updateColorPreview();
-      updateDayStates();
-      renderSavedList();
-      renderPrintSummary();
-    }
+      const grid = document.createElement("div");
+      grid.className = "days-grid";
 
-    function updateStatus(message) {
-      statusEl.textContent = message;
-    }
-
-    function updateCounter() {
-      counterEl.textContent = `Días seleccionados: ${tempSelection.size} / ${MAX_DAYS}`;
-    }
-
-    function updateColorPreview() {
-      colorPreviewEl.style.backgroundColor = colorEl.value;
-    }
-
-    function makeDateKey(monthIndex, day) {
-      return `2026-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    }
-
-    function getMonthOffset(monthIndex) {
-      const day = new Date(2026, monthIndex, 1).getDay();
-      return day === 0 ? 6 : day - 1;
-    }
-
-    function formatDate(dateKey) {
-      const [year, month, day] = dateKey.split("-");
-      return `${day}/${month}/${year}`;
-    }
-
-    function formatExportDate() {
-      const now = new Date();
-      return now.toLocaleString("es-ES", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    }
-
-    function getOccupantByDate(dateKey) {
-      for (const [employeeId, record] of Object.entries(vacations)) {
-        const dates = Array.isArray(record.dates) ? record.dates : [];
-        if (dates.includes(dateKey)) {
-          return {
-            employeeId,
-            shortName: record.shortName || employeeId,
-            fullName: record.fullName || record.shortName || employeeId,
-            role: record.role || "",
-            color: record.color || "#cccccc"
-          };
-        }
+      const offset = getMonthOffset(monthIndex);
+      for (let i = 0; i < offset; i++) {
+        const empty = document.createElement("div");
+        empty.className = "empty-cell";
+        grid.appendChild(empty);
       }
-      return null;
+
+      const daysInMonth = new Date(2026, monthIndex + 1, 0).getDate();
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = makeDateKey(monthIndex, day);
+
+        const dayEl = document.createElement("div");
+        dayEl.className = "day";
+        dayEl.dataset.dateKey = dateKey;
+
+        const numberEl = document.createElement("div");
+        numberEl.className = "day-number";
+        numberEl.textContent = String(day);
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "day-name";
+
+        dayEl.appendChild(numberEl);
+        dayEl.appendChild(nameEl);
+
+        dayEl.addEventListener("mousedown", (event) => {
+          event.preventDefault();
+          handleDayMouseDown(dateKey);
+        });
+
+        dayEl.addEventListener("mouseenter", () => {
+          handleDayMouseEnter(dateKey);
+        });
+
+        dayElements.set(dateKey, { dayEl, nameEl });
+        grid.appendChild(dayEl);
+      }
+
+      monthEl.appendChild(title);
+      monthEl.appendChild(weekdaysEl);
+      monthEl.appendChild(grid);
+      calendarEl.appendChild(monthEl);
     }
 
-    function getStoredOrDefaultColor(employeeId) {
-      if (vacations[employeeId]?.color) return vacations[employeeId].color;
-      return EMPLOYEE_MAP[employeeId]?.color || "#22c55e";
-    }
+    updateDayStates();
+  }
 
-    function canTargetEditDate(dateKey) {
-      const target = getTargetEmployee();
-      if (!target) return false;
+  function updateDayStates() {
+    const target = getTargetEmployee();
+    const targetName = target ? target.shortName : "";
+
+    for (const [dateKey, refs] of dayElements.entries()) {
+      const { dayEl, nameEl } = refs;
+
+      dayEl.classList.remove("blocked", "selected-temp");
+      dayEl.style.backgroundColor = "#fff";
+      nameEl.textContent = "";
 
       const occupant = getOccupantByDate(dateKey);
-      if (!occupant) return true;
-      return occupant.employeeId === target.id;
-    }
 
-    function renderSavedList() {
-      listEl.innerHTML = "";
+      if (occupant) {
+        dayEl.style.backgroundColor = occupant.color;
+        nameEl.textContent = occupant.shortName;
 
-      const entries = Object.entries(vacations).sort((a, b) => {
-        const aName = a[1].shortName || "";
-        const bName = b[1].shortName || "";
-        return normalizeText(aName).localeCompare(normalizeText(bName));
-      });
-
-      if (entries.length === 0) {
-        listEl.innerHTML = `<div class="saved-item">Todavía no hay vacaciones guardadas.</div>`;
-        return;
-      }
-
-      for (const [employeeId, record] of entries) {
-        const item = document.createElement("div");
-        item.className = "saved-item";
-
-        const header = document.createElement("div");
-        header.className = "saved-item-header";
-
-        const color = document.createElement("div");
-        color.className = "saved-color";
-        color.style.backgroundColor = record.color || "#cccccc";
-
-        const title = document.createElement("div");
-        title.textContent = `${record.shortName || employeeId} (${(record.dates || []).length} días)`;
-
-        header.appendChild(color);
-        header.appendChild(title);
-
-        const subtitle = document.createElement("div");
-        subtitle.className = "saved-item-subtitle";
-        subtitle.textContent = `${record.fullName || ""}${record.role ? " • " + record.role : ""}`;
-
-        const dates = document.createElement("div");
-        const sortedDates = [...(record.dates || [])].sort();
-        dates.textContent = sortedDates.length
-          ? sortedDates.map(formatDate).join(", ")
-          : "Sin fechas";
-
-        item.appendChild(header);
-        item.appendChild(subtitle);
-        item.appendChild(dates);
-        listEl.appendChild(item);
-      }
-    }
-
-    function renderPrintSummary() {
-      printSummaryEl.innerHTML = "";
-      printDateEl.textContent = `Fecha de exportación: ${formatExportDate()}`;
-
-      const entries = Object.entries(vacations).sort((a, b) => {
-        const aName = a[1].shortName || "";
-        const bName = b[1].shortName || "";
-        return normalizeText(aName).localeCompare(normalizeText(bName));
-      });
-
-      const title = document.createElement("h2");
-      title.textContent = "Resumen de vacaciones";
-      printSummaryEl.appendChild(title);
-
-      if (entries.length === 0) {
-        const empty = document.createElement("div");
-        empty.className = "print-summary-item";
-        empty.textContent = "Todavía no hay vacaciones guardadas.";
-        printSummaryEl.appendChild(empty);
-        return;
-      }
-
-      for (const [, record] of entries) {
-        const item = document.createElement("div");
-        item.className = "print-summary-item";
-
-        const sortedDates = [...(record.dates || [])].sort();
-        item.innerHTML = `
-          <strong>${record.shortName || ""}</strong><br>
-          <span>${record.fullName || ""}${record.role ? " • " + record.role : ""}</span><br>
-          <span>${sortedDates.length} días</span><br>
-          <span>${sortedDates.length ? sortedDates.map(formatDate).join(", ") : "Sin fechas"}</span>
-        `;
-
-        printSummaryEl.appendChild(item);
-      }
-    }
-
-    function createCalendar() {
-      calendarEl.innerHTML = "";
-      dayElements.clear();
-
-      for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
-        const monthEl = document.createElement("section");
-        monthEl.className = "month";
-
-        const title = document.createElement("h3");
-        title.className = "month-title";
-        title.textContent = monthNames[monthIndex];
-
-        const weekdaysEl = document.createElement("div");
-        weekdaysEl.className = "weekdays";
-
-        for (const wd of weekDays) {
-          const wdEl = document.createElement("div");
-          wdEl.className = "weekday";
-          wdEl.textContent = wd;
-          weekdaysEl.appendChild(wdEl);
-        }
-
-        const grid = document.createElement("div");
-        grid.className = "days-grid";
-
-        const offset = getMonthOffset(monthIndex);
-        for (let i = 0; i < offset; i++) {
-          const empty = document.createElement("div");
-          empty.className = "empty-cell";
-          grid.appendChild(empty);
-        }
-
-        const daysInMonth = new Date(2026, monthIndex + 1, 0).getDate();
-
-        for (let day = 1; day <= daysInMonth; day++) {
-          const dateKey = makeDateKey(monthIndex, day);
-
-          const dayEl = document.createElement("div");
-          dayEl.className = "day";
-          dayEl.dataset.dateKey = dateKey;
-
-          const numberEl = document.createElement("div");
-          numberEl.className = "day-number";
-          numberEl.textContent = String(day);
-
-          const nameEl = document.createElement("div");
-          nameEl.className = "day-name";
-
-          dayEl.appendChild(numberEl);
-          dayEl.appendChild(nameEl);
-
-          dayEl.addEventListener("mousedown", (event) => {
-            event.preventDefault();
-            handleDayMouseDown(dateKey);
-          });
-
-          dayEl.addEventListener("mouseenter", () => {
-            handleDayMouseEnter(dateKey);
-          });
-
-          dayElements.set(dateKey, { dayEl, nameEl });
-          grid.appendChild(dayEl);
-        }
-
-        monthEl.appendChild(title);
-        monthEl.appendChild(weekdaysEl);
-        monthEl.appendChild(grid);
-        calendarEl.appendChild(monthEl);
-      }
-
-      updateDayStates();
-    }
-
-    function updateDayStates() {
-      const target = getTargetEmployee();
-      const targetName = target ? target.shortName : "";
-
-      for (const [dateKey, refs] of dayElements.entries()) {
-        const { dayEl, nameEl } = refs;
-
-        dayEl.classList.remove("blocked", "selected-temp");
-        dayEl.style.backgroundColor = "#fff";
-        nameEl.textContent = "";
-
-        const occupant = getOccupantByDate(dateKey);
-
-        if (occupant) {
-          dayEl.style.backgroundColor = occupant.color;
-          nameEl.textContent = occupant.shortName;
-
-          if (!target || occupant.employeeId !== target.id) {
-            dayEl.classList.add("blocked");
-          }
-        }
-
-        if (tempSelection.has(dateKey)) {
-          dayEl.style.backgroundColor = colorEl.value;
-          nameEl.textContent = targetName || "Selección";
-          dayEl.classList.add("selected-temp");
+        if (!target || occupant.employeeId !== target.id) {
+          dayEl.classList.add("blocked");
         }
       }
 
-      updateCounter();
-      updateColorPreview();
+      if (tempSelection.has(dateKey)) {
+        dayEl.style.backgroundColor = colorEl.value;
+        nameEl.textContent = targetName || "Selección";
+        dayEl.classList.add("selected-temp");
+      }
     }
 
-    function handleDayMouseDown(dateKey) {
-      const target = getTargetEmployee();
-      if (!target) {
-        alert("Selecciona un empleado.");
-        return;
-      }
+    updateCounter();
+    updateColorPreview();
+  }
 
-      if (!isAuthenticated()) {
-        alert("PIN incorrecto.");
-        return;
-      }
+  function handleDayMouseDown(dateKey) {
+    const target = getTargetEmployee();
+    if (!target) {
+      alert("Selecciona un empleado.");
+      return;
+    }
 
-      if (!canTargetEditDate(dateKey)) {
-        const occupant = getOccupantByDate(dateKey);
-        updateStatus(`El día ${formatDate(dateKey)} ya está ocupado por ${occupant?.shortName || "otro empleado"}.`);
+    if (!isAuthenticated()) {
+      alert("PIN incorrecto.");
+      return;
+    }
+
+    if (!canTargetEditDate(dateKey)) {
+      const occupant = getOccupantByDate(dateKey);
+      updateStatus(`El día ${formatDate(dateKey)} ya está ocupado por ${occupant?.shortName || "otro empleado"}.`);
+      isMouseDown = false;
+      dragMode = null;
+      return;
+    }
+
+    isMouseDown = true;
+
+    if (tempSelection.has(dateKey)) {
+      dragMode = "remove";
+      tempSelection.delete(dateKey);
+    } else {
+      if (!canAddDateWithoutBreakingLimits(dateKey)) {
         isMouseDown = false;
         dragMode = null;
         return;
       }
+      dragMode = "add";
+      tempSelection.add(dateKey);
+    }
 
-      isMouseDown = true;
+    updateDayStates();
+  }
 
-      if (tempSelection.has(dateKey)) {
-        dragMode = "remove";
-        tempSelection.delete(dateKey);
-      } else {
-        if (tempSelection.size >= MAX_DAYS) {
-          updateStatus(`No puedes seleccionar más de ${MAX_DAYS} días.`);
-          isMouseDown = false;
-          dragMode = null;
-          return;
-        }
-        dragMode = "add";
+  function handleDayMouseEnter(dateKey) {
+    if (!isMouseDown || !dragMode) return;
+
+    const target = getTargetEmployee();
+    if (!target || !isAuthenticated()) return;
+
+    if (!canTargetEditDate(dateKey)) return;
+
+    if (dragMode === "add") {
+      if (!tempSelection.has(dateKey) && canAddDateWithoutBreakingLimits(dateKey)) {
         tempSelection.add(dateKey);
       }
-
-      updateDayStates();
+    } else if (dragMode === "remove") {
+      tempSelection.delete(dateKey);
     }
 
-    function handleDayMouseEnter(dateKey) {
-      if (!isMouseDown || !dragMode) return;
+    updateDayStates();
+  }
 
-      const target = getTargetEmployee();
-      if (!target || !isAuthenticated()) return;
-
-      if (!canTargetEditDate(dateKey)) return;
-
-      if (dragMode === "add") {
-        if (!tempSelection.has(dateKey) && tempSelection.size < MAX_DAYS) {
-          tempSelection.add(dateKey);
-        }
-      } else if (dragMode === "remove") {
-        tempSelection.delete(dateKey);
-      }
-
-      updateDayStates();
+  editBtn.addEventListener("click", () => {
+    const target = getTargetEmployee();
+    if (!target) {
+      alert("Selecciona un empleado.");
+      return;
     }
 
-    editBtn.addEventListener("click", () => {
-      const target = getTargetEmployee();
-      if (!target) {
-        alert("Selecciona un empleado.");
-        return;
-      }
+    if (!isAuthenticated()) {
+      alert("PIN incorrecto.");
+      return;
+    }
 
-      if (!isAuthenticated()) {
-        alert("PIN incorrecto.");
-        return;
-      }
+    const record = vacations[target.id];
 
-      const record = vacations[target.id];
-
-      if (!record) {
-        tempSelection = new Set();
-        colorEl.value = getStoredOrDefaultColor(target.id);
-        updateStatus(`No hay vacaciones guardadas todavía para ${target.shortName}.`);
-        updateDayStates();
-        return;
-      }
-
-      tempSelection = new Set(record.dates || []);
-      colorEl.value = record.color || getStoredOrDefaultColor(target.id);
-      updateStatus(`Editando vacaciones de ${target.shortName}. Puedes añadir o quitar días.`);
-      updateDayStates();
-    });
-
-    clearSelectionBtn.addEventListener("click", () => {
+    if (!record) {
       tempSelection = new Set();
-      updateStatus("Selección temporal borrada.");
+      colorEl.value = getStoredOrDefaultColor(target.id);
+      updateStatus(`No hay vacaciones guardadas todavía para ${target.shortName}.`);
       updateDayStates();
-    });
+      return;
+    }
 
-    saveBtn.addEventListener("click", async () => {
-      const target = getTargetEmployee();
-      if (!target) {
-        alert("Selecciona un empleado.");
+    tempSelection = new Set(record.dates || []);
+    colorEl.value = record.color || getStoredOrDefaultColor(target.id);
+    updateStatus(`Editando vacaciones de ${target.shortName}. Puedes añadir o quitar días.`);
+    updateDayStates();
+  });
+
+  clearSelectionBtn.addEventListener("click", () => {
+    tempSelection = new Set();
+    updateStatus("Selección temporal borrada.");
+    updateDayStates();
+  });
+
+  saveBtn.addEventListener("click", async () => {
+    const target = getTargetEmployee();
+    if (!target) {
+      alert("Selecciona un empleado.");
+      return;
+    }
+
+    if (!isAuthenticated()) {
+      alert("PIN incorrecto.");
+      return;
+    }
+
+    if (tempSelection.size === 0) {
+      alert("Selecciona al menos un día.");
+      return;
+    }
+
+    if (tempSelection.size > MAX_TOTAL_DAYS) {
+      alert(`No puedes guardar más de ${MAX_TOTAL_DAYS} días de vacaciones al año.`);
+      return;
+    }
+
+    const longestPeriod = getMaxConsecutiveDays([...tempSelection]);
+    if (longestPeriod > MAX_SINGLE_VACATION) {
+      alert(`Una sola vacación no puede superar ${MAX_SINGLE_VACATION} días seguidos.`);
+      return;
+    }
+
+    for (const dateKey of tempSelection) {
+      const occupant = getOccupantByDate(dateKey);
+      if (occupant && occupant.employeeId !== target.id) {
+        alert(`No se puede guardar. El día ${formatDate(dateKey)} ya está ocupado por ${occupant.shortName}.`);
         return;
       }
+    }
 
-      if (!isAuthenticated()) {
-        alert("PIN incorrecto.");
-        return;
-      }
-
-      if (tempSelection.size === 0) {
-        alert("Selecciona al menos un día.");
-        return;
-      }
-
-      if (tempSelection.size > MAX_DAYS) {
-        alert(`No puedes guardar más de ${MAX_DAYS} días.`);
-        return;
-      }
-
-      for (const dateKey of tempSelection) {
-        const occupant = getOccupantByDate(dateKey);
-        if (occupant && occupant.employeeId !== target.id) {
-          alert(`No se puede guardar. El día ${formatDate(dateKey)} ya está ocupado por ${occupant.shortName}.`);
-          return;
-        }
-      }
-
-      await set(ref(db, "vacations/" + target.id), {
-        shortName: target.shortName,
-        fullName: target.fullName,
-        role: target.role,
-        aliases: target.aliases,
-        color: colorEl.value,
-        dates: [...tempSelection].sort()
-      });
-
-      updateStatus(`Vacaciones guardadas para ${target.shortName}.`);
-      tempSelection = new Set();
-      updateDayStates();
+    await set(ref(db, "vacations/" + target.id), {
+      shortName: target.shortName,
+      fullName: target.fullName,
+      role: target.role,
+      aliases: target.aliases,
+      color: colorEl.value,
+      dates: [...tempSelection].sort()
     });
 
-    clearMineBtn.addEventListener("click", async () => {
-      const target = getTargetEmployee();
-      if (!target) {
-        alert("Selecciona un empleado.");
-        return;
+    updateStatus(`Vacaciones guardadas para ${target.shortName}.`);
+    tempSelection = new Set();
+    updateDayStates();
+  });
+
+  clearMineBtn.addEventListener("click", async () => {
+    const target = getTargetEmployee();
+    if (!target) {
+      alert("Selecciona un empleado.");
+      return;
+    }
+
+    if (!isAuthenticated()) {
+      alert("PIN incorrecto.");
+      return;
+    }
+
+    const record = vacations[target.id];
+    if (!record) {
+      alert("No hay vacaciones guardadas para este empleado.");
+      return;
+    }
+
+    const confirmed = confirm(`¿Seguro que quieres borrar todas las vacaciones de ${target.shortName}?`);
+    if (!confirmed) return;
+
+    await remove(ref(db, "vacations/" + target.id));
+    tempSelection = new Set();
+    updateStatus(`Vacaciones borradas para ${target.shortName}.`);
+    updateDayStates();
+  });
+
+  exportPdfBtn.addEventListener("click", () => {
+    renderPrintSummary();
+    printDateEl.textContent = `Fecha de exportación: ${formatExportDate()}`;
+    window.print();
+  });
+
+  colorEl.addEventListener("input", () => {
+    updateDayStates();
+  });
+
+  employeeSelectEl.addEventListener("change", () => {
+    tempSelection = new Set();
+    const current = getSelectedEmployee();
+    if (current) {
+      colorEl.value = getStoredOrDefaultColor(current.id);
+      if (!current.admin) {
+        targetSelectEl.value = current.id;
       }
-
-      if (!isAuthenticated()) {
-        alert("PIN incorrecto.");
-        return;
-      }
-
-      const record = vacations[target.id];
-      if (!record) {
-        alert("No hay vacaciones guardadas para este empleado.");
-        return;
-      }
-
-      const confirmed = confirm(`¿Seguro que quieres borrar todas las vacaciones de ${target.shortName}?`);
-      if (!confirmed) return;
-
-      await remove(ref(db, "vacations/" + target.id));
-      tempSelection = new Set();
-      updateStatus(`Vacaciones borradas para ${target.shortName}.`);
-      updateDayStates();
-    });
-
-    exportPdfBtn.addEventListener("click", () => {
-      renderPrintSummary();
-      printDateEl.textContent = `Fecha de exportación: ${formatExportDate()}`;
-      window.print();
-    });
-
-    colorEl.addEventListener("input", () => {
-      updateDayStates();
-    });
-
-    employeeSelectEl.addEventListener("change", () => {
-      tempSelection = new Set();
-      const current = getSelectedEmployee();
-      if (current) {
-        colorEl.value = getStoredOrDefaultColor(current.id);
-        if (!current.admin) {
-          targetSelectEl.value = current.id;
-        }
-      }
-      updateRoleUI();
-      updateStatus("Empleado cambiado. Introduce el PIN para editar vacaciones.");
-    });
-
-    targetSelectEl.addEventListener("change", () => {
-      tempSelection = new Set();
-      const target = getTargetEmployee();
-      if (target) {
-        colorEl.value = getStoredOrDefaultColor(target.id);
-      }
-      updateRoleUI();
-      updateStatus("Empleado de destino cambiado.");
-    });
-
-    document.addEventListener("mouseup", () => {
-      isMouseDown = false;
-      dragMode = null;
-    });
-
-    document.addEventListener("mouseleave", () => {
-      isMouseDown = false;
-      dragMode = null;
-    });
-
-    onValue(ref(db, "vacations"), (snapshot) => {
-      vacations = snapshot.val() || {};
-      renderSavedList();
-      renderPrintSummary();
-      updateRoleUI();
-    });
-
-    populateSelects();
-    createCalendar();
-    colorEl.value = getStoredOrDefaultColor("igor");
+    }
     updateRoleUI();
-  </script>
+    updateStatus("Empleado cambiado. Introduce el PIN para editar vacaciones.");
+  });
+
+  targetSelectEl.addEventListener("change", () => {
+    tempSelection = new Set();
+    const target = getTargetEmployee();
+    if (target) {
+      colorEl.value = getStoredOrDefaultColor(target.id);
+    }
+    updateRoleUI();
+    updateStatus("Empleado de destino cambiado.");
+  });
+
+  document.addEventListener("mouseup", () => {
+    isMouseDown = false;
+    dragMode = null;
+  });
+
+  document.addEventListener("mouseleave", () => {
+    isMouseDown = false;
+    dragMode = null;
+  });
+
+  onValue(ref(db, "vacations"), (snapshot) => {
+    vacations = snapshot.val() || {};
+    renderSavedList();
+    renderPrintSummary();
+    updateRoleUI();
+  });
+
+  populateSelects();
+  createCalendar();
+  colorEl.value = getStoredOrDefaultColor("igor");
+  updateRoleUI();
+</script>
 </body>
 </html>
